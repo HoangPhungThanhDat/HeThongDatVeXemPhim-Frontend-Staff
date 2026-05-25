@@ -9,7 +9,7 @@ export function SidebarBrand() {
       <Image
         src={bannergau21}
         alt="Cinema Logo"
-        w="250px"
+        w="200px"
         
         objectFit="contain"
       />

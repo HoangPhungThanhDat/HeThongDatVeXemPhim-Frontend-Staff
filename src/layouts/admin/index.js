@@ -19,10 +19,17 @@ export default function Dashboard(props) {
   const getRoute = () => {
     return window.location.pathname !== '/admin/full-screen-maps';
   };
+
   const getActiveRoute = (routes) => {
     let activeRoute = 'Default Brand Text';
     for (let i = 0; i < routes.length; i++) {
-      if (routes[i].collapse) {
+      // Xử lý children (menu accordion)
+      if (routes[i].children) {
+        let childActiveRoute = getActiveRoute(routes[i].children);
+        if (childActiveRoute !== activeRoute) {
+          return childActiveRoute;
+        }
+      } else if (routes[i].collapse) {
         let collapseActiveRoute = getActiveRoute(routes[i].items);
         if (collapseActiveRoute !== activeRoute) {
           return collapseActiveRoute;
@@ -42,10 +49,17 @@ export default function Dashboard(props) {
     }
     return activeRoute;
   };
+
   const getActiveNavbar = (routes) => {
     let activeNavbar = false;
     for (let i = 0; i < routes.length; i++) {
-      if (routes[i].collapse) {
+      // Xử lý children (menu accordion)
+      if (routes[i].children) {
+        let childActiveNavbar = getActiveNavbar(routes[i].children);
+        if (childActiveNavbar !== activeNavbar) {
+          return childActiveNavbar;
+        }
+      } else if (routes[i].collapse) {
         let collapseActiveNavbar = getActiveNavbar(routes[i].items);
         if (collapseActiveNavbar !== activeNavbar) {
           return collapseActiveNavbar;
@@ -65,10 +79,17 @@ export default function Dashboard(props) {
     }
     return activeNavbar;
   };
+
   const getActiveNavbarText = (routes) => {
     let activeNavbar = false;
     for (let i = 0; i < routes.length; i++) {
-      if (routes[i].collapse) {
+      // Xử lý children (menu accordion)
+      if (routes[i].children) {
+        let childActiveNavbar = getActiveNavbarText(routes[i].children);
+        if (childActiveNavbar !== activeNavbar) {
+          return childActiveNavbar;
+        }
+      } else if (routes[i].collapse) {
         let collapseActiveNavbar = getActiveNavbarText(routes[i].items);
         if (collapseActiveNavbar !== activeNavbar) {
           return collapseActiveNavbar;
@@ -88,8 +109,13 @@ export default function Dashboard(props) {
     }
     return activeNavbar;
   };
+
   const getRoutes = (routes) => {
     return routes.map((route, key) => {
+      // Xử lý children (menu accordion) → đệ quy vào trong
+      if (route.children) {
+        return getRoutes(route.children);
+      }
       if (route.layout === '/admin') {
         return (
           <Route path={`${route.path}`} element={route.component} key={key} />
@@ -97,14 +123,13 @@ export default function Dashboard(props) {
       }
       if (route.collapse) {
         return getRoutes(route.items);
-      } else {
-        return null;
       }
+      return null;
     });
   };
+
   document.documentElement.dir = 'ltr';
   const { onOpen } = useDisclosure();
-  document.documentElement.dir = 'ltr';
   return (
     <Box>
       <Box>

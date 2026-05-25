@@ -6,92 +6,94 @@ import {
   List,
   ListItem,
   Text,
-  Button,
-  useColorMode,
   useColorModeValue,
 } from "@chakra-ui/react";
 
 export default function Footer() {
-  const textColor = useColorModeValue("gray.400", "white");
-  const { toggleColorMode } = useColorMode();
+  const textColor = useColorModeValue("gray.500", "gray.300");
+  const hoverColor = useColorModeValue("blue.500", "blue.300");
+
   return (
     <Flex
       zIndex='3'
       flexDirection={{
         base: "column",
-        xl: "row",
+        md: "row",
       }}
-      alignItems={{
-        base: "center",
-        xl: "start",
-      }}
+      alignItems='center'
       justifyContent='space-between'
-      px={{ base: "30px", md: "50px" }}
-      pb='30px'>
+      px={{ base: "20px", md: "35px" }}
+      py='18px'
+      borderTop='1px solid'
+      borderColor={useColorModeValue("gray.200", "whiteAlpha.100")}
+    >
+      {/* TEXT */}
       <Text
         color={textColor}
+        fontSize='sm'
         textAlign={{
           base: "center",
-          xl: "start",
+          md: "left",
         }}
-        mb={{ base: "20px", xl: "0px" }}>
-        {" "}
-        &copy; {1900 + new Date().getYear()}
-        <Text as='span' fontWeight='500' ms='4px'>
-          Horizon UI. All Rights Reserved. Made with love by
-          <Link
-            mx='3px'
-            color={textColor}
-            href='https://www.simmmple.com?ref=horizon-chakra-free'
-            target='_blank'
-            fontWeight='700'>
-            Simmmple!
-          </Link>
+        mb={{ base: "12px", md: "0" }}
+      >
+        © {new Date().getFullYear()} Hệ thống quản lý rạp phim.
+        <Text as='span' fontWeight='600' ms='4px'>
+          Phát triển bởi DAT HOANG 🚀
         </Text>
       </Text>
-      <List display='flex'>
+
+      {/* MENU */}
+      <List display='flex' alignItems='center'>
         <ListItem
           me={{
-            base: "20px",
-            md: "44px",
-          }}>
+            base: "16px",
+            md: "28px",
+          }}
+        >
           <Link
+            fontSize='sm'
             fontWeight='500'
             color={textColor}
-            href='mailto:hello@simmmple.com'>
-            Support
+            _hover={{
+              color: hoverColor,
+              textDecoration: "none",
+            }}
+          >
+            Hỗ trợ
           </Link>
         </ListItem>
+
         <ListItem
           me={{
-            base: "20px",
-            md: "44px",
-          }}>
+            base: "16px",
+            md: "28px",
+          }}
+        >
           <Link
+            fontSize='sm'
             fontWeight='500'
             color={textColor}
-            href='https://www.simmmple.com/licenses?ref=horizon-chakra-free'>
-            License
+            _hover={{
+              color: hoverColor,
+              textDecoration: "none",
+            }}
+          >
+            Điều khoản
           </Link>
         </ListItem>
-        <ListItem
-          me={{
-            base: "20px",
-            md: "44px",
-          }}>
-          <Link
-            fontWeight='500'
-            color={textColor}
-            href='https://simmmple.com/terms-of-service?ref=horizon-chakra-free'>
-            Terms of Use
-          </Link>
-        </ListItem>
+
         <ListItem>
           <Link
+            fontSize='sm'
             fontWeight='500'
             color={textColor}
-            href='https://www.blog.simmmple.com/?ref=horizon-chakra-free'>
-            Blog
+            _hover={{
+              color: hoverColor,
+              textDecoration: "none",
+            }}
+          >
+            Liên hệ
           </Link>
         </ListItem>
       </List>

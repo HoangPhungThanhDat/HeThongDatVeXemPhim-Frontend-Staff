@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 
-/* ─────────────────────────────────────────────────────────────
-   GLOBAL CSS  –  injected once into <head>
-   Fonts: Bebas Neue · Syne · JetBrains Mono  (Google Fonts)
-   No external UI lib needed.
-───────────────────────────────────────────────────────────── */
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@300;400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
 
@@ -21,7 +16,6 @@ const GLOBAL_CSS = `
 @keyframes fdotMove{0%{transform:translateY(0);opacity:0}10%{opacity:.3}90%{opacity:.15}100%{transform:translateY(-120px);opacity:0}}
 @keyframes textGlow{0%,100%{opacity:0}50%{opacity:.4}}
 
-/* ── overlay layers ── */
 .gp3-noise{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   background-size:256px;}
@@ -33,14 +27,19 @@ const GLOBAL_CSS = `
   background:linear-gradient(transparent,rgba(255,85,0,.5),transparent);
   animation:scanMove 3.5s linear infinite;}
 
-/* ── card ── */
+/* ── CARD ── */
 .gp3-card{
-  width:100%;display:grid;grid-template-columns:1.2fr 1fr;
-  border-radius:24px;overflow:hidden;position:relative;
+  width:100%;
+  height:calc(100vh - clamp(16px,3vh,32px) * 2);
+  max-height:820px;
+  min-height:480px;
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  border-radius:20px;overflow:hidden;position:relative;
   animation:cardReveal 1s cubic-bezier(.16,1,.3,1) both;
 }
 .gp3-card::before{
-  content:'';position:absolute;inset:0;border-radius:24px;padding:1px;
+  content:'';position:absolute;inset:0;border-radius:20px;padding:1px;
   background:linear-gradient(135deg,rgba(255,85,0,.4),rgba(255,85,0,.05),rgba(255,85,0,.2));
   -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude;
@@ -49,14 +48,15 @@ const GLOBAL_CSS = `
 /* ── LEFT ── */
 .gp3-left{
   background:linear-gradient(145deg,#0A0A0A,#0D0D0D,#0F0808);
-  padding:56px 52px;display:flex;flex-direction:column;
+  padding:clamp(16px,3vh,42px) clamp(20px,3vw,48px);
+  display:flex;flex-direction:column;
   position:relative;overflow:hidden;
   border-right:1px solid rgba(255,85,0,.08);}
 .gp3-left::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(to right,transparent,rgba(255,85,0,.5),transparent);}
 .gp3-watermark{
   position:absolute;right:-40px;bottom:-60px;
-  font-family:'Bebas Neue',sans-serif;font-size:260px;color:transparent;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,18vw,240px);color:transparent;
   -webkit-text-stroke:1px rgba(255,85,0,.05);line-height:1;
   pointer-events:none;user-select:none;letter-spacing:-10px;}
 .gp3-ring{position:absolute;border-radius:50%;pointer-events:none;border:1px solid rgba(255,85,0,.06);}
@@ -69,24 +69,23 @@ const GLOBAL_CSS = `
   padding:12px 4px;opacity:.08;pointer-events:none;}
 .gp3-perf{width:14px;height:10px;border-radius:2px;background:var(--o);flex-shrink:0;}
 
-/* logo gem spin */
+/* Logo gem */
 .gp3-logo-gem{
-  width:48px;height:48px;border-radius:14px;
+  width:42px;height:42px;border-radius:12px;
   background:linear-gradient(135deg,rgba(255,85,0,.25),rgba(255,50,0,.08));
   border:1px solid rgba(255,85,0,.3);
   display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;}
+  position:relative;overflow:hidden;flex-shrink:0;}
 .gp3-logo-gem::before{
   content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
   background:conic-gradient(transparent,rgba(255,85,0,.15),transparent 30%);
   animation:spin 4s linear infinite;}
 .gp3-logo-gem svg{position:relative;z-index:1;}
 
-/* h1 outline glow */
 .gp3-h1-outline{
   display:block;color:transparent;
   -webkit-text-stroke:1.5px var(--o);
-  letter-spacing:5px;font-size:72px;
+  letter-spacing:4px;font-size:clamp(38px,6vw,72px);
   position:relative;}
 .gp3-h1-outline::after{
   content:attr(data-text);position:absolute;left:0;top:0;
@@ -95,26 +94,59 @@ const GLOBAL_CSS = `
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   opacity:0;animation:textGlow 3s ease-in-out infinite;}
 
-/* stats block */
+/* Hero block — flex:1 nhưng min-height:0 để tự co */
+.gp3-hero-block{
+  flex:1;min-height:0;
+  display:flex;flex-direction:column;justify-content:center;
+  margin:clamp(10px,2vh,30px) 0;
+  position:relative;z-index:2;
+  animation:fu .7s .2s both;}
+
+/* Description text ẩn khi quá chật */
+.gp3-desc-text{
+  font-size:clamp(11px,1.5vh,13.5px);
+  color:rgba(255,255,255,.28);
+  line-height:1.7;max-width:300px;
+  margin-top:clamp(6px,1.2vh,16px);
+  font-weight:300;}
+
 .gp3-stats{
   display:flex;background:rgba(255,255,255,.015);
-  border:1px solid rgba(255,255,255,.05);border-radius:14px;overflow:hidden;}
-.gp3-stat{flex:1;padding:16px 20px;border-right:1px solid rgba(255,255,255,.04);position:relative;}
+  border:1px solid rgba(255,255,255,.05);border-radius:12px;overflow:hidden;
+  flex-shrink:0;}
+.gp3-stat{flex:1;padding:clamp(6px,1.2vh,14px) 16px;border-right:1px solid rgba(255,255,255,.04);position:relative;}
 .gp3-stat:last-child{border-right:none;}
 .gp3-stat::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
   background:linear-gradient(to right,transparent,var(--o),transparent);opacity:0;transition:opacity .3s;}
 .gp3-stat:hover::after{opacity:.4;}
 
-/* pill hover */
+/* Pills — luôn hiển thị, flex-shrink:0, flex-wrap:wrap */
+.gp3-pills-row{
+  display:flex;flex-wrap:wrap;gap:5px;
+  margin-top:clamp(6px,1.2vh,16px);
+  position:relative;z-index:2;
+  flex-shrink:0;
+  animation:fu .7s .42s both;}
+
 .gp3-pill{transition:all .3s;cursor:default;position:relative;overflow:hidden;}
 .gp3-pill::before{content:'';position:absolute;inset:0;
   background:linear-gradient(135deg,rgba(255,85,0,.08),transparent);opacity:0;transition:opacity .3s;}
 .gp3-pill:hover{border-color:rgba(255,85,0,.25)!important;color:rgba(255,255,255,.7)!important;}
 .gp3-pill:hover::before{opacity:1;}
 
+/* Footer flag — flex-shrink:0 */
+.gp3-footer-flag{
+  padding-top:clamp(8px,1.4vh,16px);
+  border-top:1px solid rgba(255,255,255,.04);
+  margin-top:clamp(8px,1.4vh,16px);
+  position:relative;z-index:2;
+  flex-shrink:0;
+  animation:fu .7s .5s both;}
+
 /* ── RIGHT ── */
 .gp3-right{
-  background:#070707;padding:52px 46px;
+  background:#070707;
+  padding:clamp(18px,3.5vh,48px) clamp(18px,3vw,44px);
   display:flex;flex-direction:column;justify-content:center;
   position:relative;overflow:hidden;}
 .gp3-corner-tl{position:absolute;top:0;right:0;width:60px;height:60px;
@@ -126,33 +158,31 @@ const GLOBAL_CSS = `
 .gp3-fdot{position:absolute;border-radius:50%;background:var(--o);
   animation:fdotMove linear infinite;opacity:0;}
 
-/* live badge */
 .gp3-live-core{position:absolute;inset:0;border-radius:50%;background:var(--o);animation:corePulse 2s ease-in-out infinite;}
 .gp3-live-ring{position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(255,85,0,.5);animation:ringExp 2s ease-out infinite;}
 .gp3-live-ring2{position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,85,0,.2);animation:ringExp 2s ease-out infinite .4s;}
 
 /* inputs */
 .gp3-inp,.gp3-sel{
-  width:100%;height:50px;
+  width:100%;height:clamp(40px,5.5vh,50px);
   background:rgba(255,255,255,.025);
   border:1px solid rgba(255,255,255,.06);
-  border-radius:13px;color:#fff;
-  font-size:13.5px;font-family:'Syne',sans-serif;
-  padding:0 50px 0 18px;outline:none;
+  border-radius:12px;color:#fff;
+  font-size:13px;font-family:'Syne',sans-serif;
+  padding:0 44px 0 16px;outline:none;
   transition:all .25s;-webkit-appearance:none;appearance:none;}
-.gp3-inp::placeholder{color:rgba(255,255,255,.13);font-size:13px;}
+.gp3-inp::placeholder{color:rgba(255,255,255,.13);font-size:12.5px;}
 .gp3-inp:focus,.gp3-sel:focus{
   border-color:rgba(255,85,0,.35);background:rgba(255,85,0,.025);
   box-shadow:0 0 0 4px rgba(255,85,0,.06),inset 0 1px 0 rgba(255,255,255,.04);}
 .gp3-sel option{background:#0D0D0D;color:#fff;}
 .gp3-inp-line{
-  height:1px;margin-top:-1px;border-radius:0 0 13px 13px;
+  height:1px;margin-top:-1px;border-radius:0 0 12px 12px;
   background:linear-gradient(to right,transparent,var(--o),transparent);
   transform:scaleX(0);transform-origin:center;transition:transform .3s;opacity:.6;}
 
-/* custom checkbox */
 .gp3-chk-box{
-  width:17px;height:17px;border-radius:5px;
+  width:16px;height:16px;border-radius:5px;
   border:1px solid rgba(255,255,255,.1);
   background:rgba(255,255,255,.02);
   display:flex;align-items:center;justify-content:center;
@@ -165,17 +195,16 @@ const GLOBAL_CSS = `
   border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;
   transform:rotate(-45deg) translateY(-1px);display:block;position:relative;z-index:1;}
 
-/* main button */
 .gp3-btn-main{
-  width:100%;height:54px;
+  width:100%;height:clamp(44px,6vh,54px);
   background:linear-gradient(135deg,#FF5500,#FF3300,#FF7700);
   background-size:200% 100%;color:#fff;
   font-size:13px;font-weight:700;font-family:'Syne',sans-serif;
   letter-spacing:1.5px;text-transform:uppercase;
-  border:none;border-radius:14px;cursor:pointer;
+  border:none;border-radius:13px;cursor:pointer;
   position:relative;overflow:hidden;
   transition:transform .15s,box-shadow .2s,background-position .4s;}
-.gp3-btn-main::before{content:'';position:absolute;inset:0;border-radius:14px;
+.gp3-btn-main::before{content:'';position:absolute;inset:0;border-radius:13px;
   background:linear-gradient(to bottom,rgba(255,255,255,.12),transparent 60%);}
 .gp3-btn-main:hover{transform:translateY(-2px);background-position:100% 0;
   box-shadow:0 16px 50px rgba(255,60,0,.45),0 0 30px rgba(255,85,0,.2);}
@@ -184,48 +213,53 @@ const GLOBAL_CSS = `
   background:linear-gradient(to right,transparent,rgba(255,255,255,.2),transparent);
   transform:skewX(-20deg);animation:shine 3s infinite 1.5s;}
 
-/* alt buttons */
 .gp3-btn-alt{
-  flex:1;height:46px;background:transparent;
-  border:1px solid rgba(255,255,255,.06);border-radius:12px;
-  color:rgba(255,255,255,.3);font-size:12px;font-family:'Syne',sans-serif;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  flex:1;height:clamp(38px,5vh,46px);background:transparent;
+  border:1px solid rgba(255,255,255,.06);border-radius:11px;
+  color:rgba(255,255,255,.3);font-size:11.5px;font-family:'Syne',sans-serif;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
   transition:all .25s;letter-spacing:.3px;position:relative;overflow:hidden;}
 .gp3-btn-alt::before{content:'';position:absolute;inset:0;
   background:linear-gradient(135deg,rgba(255,85,0,.06),transparent);opacity:0;transition:opacity .3s;}
 .gp3-btn-alt:hover{border-color:rgba(255,85,0,.2);color:rgba(255,255,255,.6);}
 .gp3-btn-alt:hover::before{opacity:1;}
 
-/* security */
 .gp3-sec-icon{
-  width:34px;height:34px;background:rgba(255,85,0,.05);
-  border:1px solid rgba(255,85,0,.1);border-radius:10px;
+  width:32px;height:32px;background:rgba(255,85,0,.05);
+  border:1px solid rgba(255,85,0,.1);border-radius:9px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   animation:secPulse 3s ease-in-out infinite;}
 
-/* eye button */
 .gp3-eye-btn{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  position:absolute;right:13px;top:50%;transform:translateY(-50%);
   background:none;border:none;cursor:pointer;
   color:rgba(255,85,0,.4);padding:4px;display:flex;transition:color .2s;}
 .gp3-eye-btn:hover{color:var(--o);}
 
-/* forgot */
 .gp3-fgt{background:none;border:none;font-family:'Syne',sans-serif;
-  font-size:12.5px;font-weight:600;color:rgba(255,85,0,.65);
+  font-size:12px;font-weight:600;color:rgba(255,85,0,.65);
   cursor:pointer;padding:0;letter-spacing:.3px;transition:all .2s;}
 .gp3-fgt:hover{color:var(--o);text-shadow:0 0 12px rgba(255,85,0,.4);}
 
+/* ── Responsive ── */
 @media(max-width:740px){
   .gp3-left{display:none!important;}
   .gp3-card{grid-template-columns:1fr!important;}
-  .gp3-right{padding:36px 24px!important;}
+  .gp3-right{padding:28px 20px!important;}
+}
+
+/* Màn thấp: ẩn bớt decoration, KHÔNG ẩn pills */
+@media(max-height:580px){
+  .gp3-watermark{display:none;}
+  .gp3-perfs{display:none;}
+  .gp3-footer-flag{display:none!important;}
+  .gp3-desc-text{display:none!important;}
+}
+@media(max-height:680px){
+  .gp3-desc-text{display:none!important;}
 }
 `;
 
-/* ─────────────────────────────────────────────
-   Canvas 1 – Particle background
-───────────────────────────────────────────── */
 function ParticleBg() {
   const ref = useRef(null);
   useEffect(() => {
@@ -269,9 +303,6 @@ function ParticleBg() {
   return <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:0 }} />;
 }
 
-/* ─────────────────────────────────────────────
-   Canvas 2 – Film strip sides
-───────────────────────────────────────────── */
 function FilmStripBg() {
   const ref = useRef(null);
   useEffect(() => {
@@ -302,9 +333,6 @@ function FilmStripBg() {
   return <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:1 }} />;
 }
 
-/* ─────────────────────────────────────────────
-   Live clock
-───────────────────────────────────────────── */
 function LiveClock() {
   const [t, setT] = useState("— 00:00:00 · HCMC");
   useEffect(() => {
@@ -317,15 +345,12 @@ function LiveClock() {
     return () => clearInterval(id);
   }, []);
   return (
-    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"rgba(255,85,0,.45)", letterSpacing:2.5, marginTop:14, display:"block" }}>
+    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"rgba(255,85,0,.45)", letterSpacing:2.5, marginTop:8, display:"block" }}>
       {t}
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────
-   Count-up number
-───────────────────────────────────────────── */
 function CountUp({ target, suffix = "" }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -341,17 +366,14 @@ function CountUp({ target, suffix = "" }) {
   return <>{val}{suffix}</>;
 }
 
-/* ─────────────────────────────────────────────
-   Input field wrapper
-───────────────────────────────────────────── */
-function Field({ label, iconPath, delay, children }) {
+function Field({ label, iconPath, delay, children, mb }) {
   return (
-    <div style={{ marginBottom:15, animation:`fu .6s ${delay}s both` }}>
-      <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:8 }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width:12, height:12, flexShrink:0 }}>
+    <div style={{ marginBottom: mb ?? "clamp(8px,1.4vh,14px)", animation:`fu .6s ${delay}s both` }}>
+      <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:6 }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width:11, height:11, flexShrink:0 }}>
           {iconPath}
         </svg>
-        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10.5, fontWeight:500, color:"rgba(255,255,255,.3)", letterSpacing:1.2, textTransform:"uppercase" }}>
+        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, color:"rgba(255,255,255,.3)", letterSpacing:1.2, textTransform:"uppercase" }}>
           {label}
         </span>
       </div>
@@ -363,14 +385,10 @@ function Field({ label, iconPath, delay, children }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   MAIN COMPONENT
-───────────────────────────────────────────── */
 export default function StaffSignIn() {
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(false);
 
-  // Inject CSS once
   useEffect(() => {
     if (document.getElementById("gp3-css")) return;
     const s = document.createElement("style");
@@ -378,7 +396,6 @@ export default function StaffSignIn() {
     document.head.appendChild(s);
   }, []);
 
-  // Focus line effect
   useEffect(() => {
     const handler = (e) => {
       const box = e.target.closest("[data-ibox]");
@@ -394,12 +411,20 @@ export default function StaffSignIn() {
 
   const PILLS = ["Tra cứu phim","Chọn ghế live","In vé QR","Báo cáo ca","Hoàn vé","Combo bắp nước"];
 
-  const S = (style) => style; // passthrough helper for inline style objects
-
   return (
-    <div style={{ minHeight:"100vh", background:"#050505", display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden", fontFamily:"'Syne',sans-serif" }}>
-
-      {/* Background layers */}
+    <div style={{
+      height: "100vh",
+      width: "100vw",
+      background: "#050505",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "clamp(10px,2.5vh,28px) clamp(10px,2vw,28px)",
+      position: "relative",
+      overflow: "hidden",
+      fontFamily: "'Syne',sans-serif",
+      boxSizing: "border-box",
+    }}>
       <ParticleBg />
       <FilmStripBg />
       <div className="gp3-noise" />
@@ -407,93 +432,89 @@ export default function StaffSignIn() {
       <div className="gp3-hlines" />
       <div className="gp3-scan" />
 
-      {/* ── CARD ── */}
-      <div style={{ position:"relative", zIndex:10, width:"100%", maxWidth:1100 }}>
+      <div style={{ position:"relative", zIndex:10, width:"100%", maxWidth:"min(1100px, 160vh)" }}>
         <div className="gp3-card">
 
-          {/* ════════════ LEFT ════════════ */}
+          {/* ════ LEFT ════ */}
           <div className="gp3-left">
             <div className="gp3-watermark">GF</div>
             <div className="gp3-ring gp3-ring1" />
             <div className="gp3-ring gp3-ring2" />
             <div className="gp3-ring gp3-ring3" />
             <div className="gp3-ring gp3-ring4" />
-
-            {/* Film perfs */}
             <div className="gp3-perfs">
               {Array.from({ length: 26 }).map((_, i) => <div key={i} className="gp3-perf" />)}
             </div>
 
             {/* Logo */}
-            <div style={{ display:"flex", alignItems:"center", gap:14, position:"relative", zIndex:2, animation:"fu .7s .1s both" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, position:"relative", zIndex:2, animation:"fu .7s .1s both", flexShrink:0 }}>
               <div className="gp3-logo-gem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" strokeLinecap="round" style={{ width:22, height:22 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" strokeLinecap="round" style={{ width:20, height:20 }}>
                   <rect x="2" y="4" width="20" height="14" rx="2"/>
                   <path d="M8 4v14M16 4v14M2 10h20M2 14h4M18 14h4"/>
                 </svg>
               </div>
               <div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:"#FF5500", letterSpacing:3 }}>GấuPhim</div>
-                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"rgba(255,255,255,.2)", letterSpacing:2 }}>Staff Portal · v3.0</div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(18px,2.5vh,26px)", color:"#FF5500", letterSpacing:3 }}>GấuPhim</div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(255,255,255,.2)", letterSpacing:2 }}>Staff Portal · v3.0</div>
               </div>
             </div>
 
-            {/* Hero */}
-            <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", margin:"42px 0", position:"relative", zIndex:2, animation:"fu .7s .2s both" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
-                <div style={{ width:32, height:1.5, background:"linear-gradient(to right,#FF5500,transparent)" }} />
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, color:"rgba(255,85,0,.7)", letterSpacing:3, textTransform:"uppercase" }}>Hệ thống nội bộ</span>
+            {/* Hero text — flex:1 min-height:0 để tự co */}
+            <div className="gp3-hero-block">
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                <div style={{ width:28, height:1.5, background:"linear-gradient(to right,#FF5500,transparent)" }} />
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:500, color:"rgba(255,85,0,.7)", letterSpacing:3, textTransform:"uppercase" }}>Hệ thống nội bộ</span>
               </div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:80, lineHeight:.88, color:"#fff", letterSpacing:3 }}>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(36px,6.5vh,80px)", lineHeight:.88, color:"#fff", letterSpacing:3 }}>
                 ĐẶT VÉ
                 <span className="gp3-h1-outline" data-text="TRỰC TIẾP">TRỰC TIẾP</span>
               </div>
               <LiveClock />
-              <p style={{ fontSize:13.5, color:"rgba(255,255,255,.28)", lineHeight:1.75, maxWidth:310, marginTop:22, fontWeight:300 }}>
+              <p className="gp3-desc-text">
                 Tra cứu suất chiếu, chọn ghế, thanh toán và in vé QR trong 30 giây. Tất cả trong một màn hình duy nhất.
               </p>
             </div>
 
             {/* Stats */}
             <div className="gp3-stats" style={{ animation:"fu .7s .35s both" }}>
-              {[["CountUp-12","Rạp chiếu"],["CountUp-480","Suất / ngày"],["24/7","Hoạt động"]].map(([n,l],i) => (
+              {[["CountUp-12","Rạp chiếu"],["CountUp-480","Suất / ngày"],["24/7","Hoạt động"]].map(([n,l]) => (
                 <div key={l} className="gp3-stat">
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:30, color:"#FF5500", letterSpacing:1, lineHeight:1 }}>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(18px,2.8vh,30px)", color:"#FF5500", letterSpacing:1, lineHeight:1 }}>
                     {n === "CountUp-12" ? <CountUp target={12} /> : n === "CountUp-480" ? <CountUp target={480} suffix="+" /> : n}
                   </div>
-                  <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(255,255,255,.2)", letterSpacing:1.5, textTransform:"uppercase", marginTop:4 }}>{l}</div>
+                  <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:"rgba(255,255,255,.2)", letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{l}</div>
                 </div>
               ))}
             </div>
 
-            {/* Pills */}
-            <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginTop:24, position:"relative", zIndex:2, animation:"fu .7s .42s both" }}>
+            {/* Pills — luôn hiển thị */}
+            <div className="gp3-pills-row">
               {PILLS.map(p => (
-                <div key={p} className="gp3-pill" style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.05)", borderRadius:100, fontSize:11, color:"rgba(255,255,255,.35)" }}>
-                  <div style={{ width:5, height:5, borderRadius:"50%", background:"rgba(255,85,0,.6)", flexShrink:0 }} />
+                <div key={p} className="gp3-pill" style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 11px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.05)", borderRadius:100, fontSize:10.5, color:"rgba(255,255,255,.35)" }}>
+                  <div style={{ width:4, height:4, borderRadius:"50%", background:"rgba(255,85,0,.6)", flexShrink:0 }} />
                   {p}
                 </div>
               ))}
             </div>
 
-            {/* Footer */}
-            <div style={{ paddingTop:22, borderTop:"1px solid rgba(255,255,255,.04)", marginTop:24, position:"relative", zIndex:2, animation:"fu .7s .5s both" }}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:10, padding:"9px 16px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.04)", borderRadius:100 }}>
-                <span style={{ fontSize:18 }}>🇻🇳</span>
+            {/* Footer flag */}
+            <div className="gp3-footer-flag">
+              <div style={{ display:"inline-flex", alignItems:"center", gap:9, padding:"7px 14px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.04)", borderRadius:100 }}>
+                <span style={{ fontSize:16 }}>🇻🇳</span>
                 <div>
-                  <div style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,.4)" }}>GấuPhim — Việt Nam</div>
-                  <div style={{ fontSize:10, color:"rgba(255,255,255,.15)" }}>Hoàng Sa – Trường Sa là của Việt Nam</div>
+                  <div style={{ fontSize:10.5, fontWeight:600, color:"rgba(255,255,255,.4)" }}>GấuPhim — Việt Nam</div>
+                  <div style={{ fontSize:9.5, color:"rgba(255,255,255,.15)" }}>Hoàng Sa – Trường Sa là của Việt Nam</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ════════════ RIGHT ════════════ */}
+          {/* ════ RIGHT ════ */}
           <div className="gp3-right">
             <div className="gp3-corner-tl" />
             <div className="gp3-corner-br" />
 
-            {/* Floating dots */}
             <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
               {Array.from({ length: 18 }).map((_, i) => {
                 const s = Math.random() * 3 + 1.5;
@@ -504,17 +525,17 @@ export default function StaffSignIn() {
             </div>
 
             {/* Form header */}
-            <div style={{ marginBottom:30, animation:"fu .6s .2s both" }}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"5px 13px 5px 9px", background:"rgba(255,85,0,.07)", border:"1px solid rgba(255,85,0,.15)", borderRadius:100, marginBottom:18 }}>
+            <div style={{ marginBottom:"clamp(12px,2vh,26px)", animation:"fu .6s .2s both" }}>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"5px 12px 5px 8px", background:"rgba(255,85,0,.07)", border:"1px solid rgba(255,85,0,.15)", borderRadius:100, marginBottom:"clamp(8px,1.5vh,16px)" }}>
                 <div style={{ position:"relative", width:8, height:8, flexShrink:0 }}>
                   <div className="gp3-live-core" />
                   <div className="gp3-live-ring" />
                   <div className="gp3-live-ring2" />
                 </div>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, color:"#FF7744", letterSpacing:1.5, textTransform:"uppercase" }}>Nhân viên · Ca đang mở</span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:500, color:"#FF7744", letterSpacing:1.5, textTransform:"uppercase" }}>Nhân viên · Ca đang mở</span>
               </div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:44, letterSpacing:2, color:"#fff", lineHeight:1, marginBottom:6 }}>ĐĂNG NHẬP</div>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"rgba(255,255,255,.22)", fontWeight:300 }}>// xác thực tài khoản nhân viên GấuPhim</div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(28px,5vh,44px)", letterSpacing:2, color:"#fff", lineHeight:1, marginBottom:5 }}>ĐĂNG NHẬP</div>
+              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"rgba(255,255,255,.22)", fontWeight:300 }}>// xác thực tài khoản nhân viên GấuPhim</div>
             </div>
 
             {/* Email */}
@@ -527,8 +548,8 @@ export default function StaffSignIn() {
               <input className="gp3-inp" type={showPwd ? "text" : "password"} placeholder="••••••••••" autoComplete="current-password" data-ibox />
               <button className="gp3-eye-btn" onClick={() => setShowPwd(v => !v)} type="button">
                 {showPwd
-                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:15, height:15 }}><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:15, height:15 }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:14, height:14 }}><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:14, height:14 }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 }
               </button>
             </Field>
@@ -539,17 +560,17 @@ export default function StaffSignIn() {
                 <option value="" disabled>Chọn rạp của bạn...</option>
                 {["GấuPhim Quận 1 — Hồ Chí Minh","GấuPhim Quận 7 — Phú Mỹ Hưng","GấuPhim Bình Thạnh — Hồ Chí Minh","GấuPhim Thủ Đức — Hồ Chí Minh","GấuPhim Hoàn Kiếm — Hà Nội","GấuPhim Cầu Giấy — Hà Nội","GấuPhim Hải Châu — Đà Nẵng","GấuPhim Sơn Trà — Đà Nẵng"].map(r => <option key={r}>{r}</option>)}
               </select>
-              <div style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", color:"rgba(255,255,255,.18)", pointerEvents:"none" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:14, height:14 }}><path d="M6 9l6 6 6-6"/></svg>
+              <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color:"rgba(255,255,255,.18)", pointerEvents:"none" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:13, height:13 }}><path d="M6 9l6 6 6-6"/></svg>
               </div>
             </Field>
 
             {/* Options row */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"6px 0 20px", animation:"fu .6s .44s both" }}>
-              <label style={{ display:"flex", alignItems:"center", gap:9, cursor:"pointer", userSelect:"none" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"4px 0 clamp(10px,1.8vh,18px)", animation:"fu .6s .44s both" }}>
+              <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
                 <input type="checkbox" style={{ display:"none" }} checked={remember} onChange={e => setRemember(e.target.checked)} />
                 <div className={`gp3-chk-box${remember ? " checked" : ""}`} onClick={() => setRemember(v => !v)} />
-                <span style={{ fontSize:12.5, color:"rgba(255,255,255,.28)" }}>Ghi nhớ ca này</span>
+                <span style={{ fontSize:12, color:"rgba(255,255,255,.28)" }}>Ghi nhớ ca này</span>
               </label>
               <button className="gp3-fgt">Quên mật khẩu?</button>
             </div>
@@ -561,40 +582,39 @@ export default function StaffSignIn() {
             </button>
 
             {/* Divider */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, margin:"18px 0", animation:"fu .6s .52s both" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"clamp(10px,1.8vh,16px) 0", animation:"fu .6s .52s both" }}>
               <div style={{ flex:1, height:1, background:"rgba(255,255,255,.04)" }} />
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"rgba(255,255,255,.12)", letterSpacing:2, textTransform:"uppercase" }}>hoặc đăng nhập bằng</span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, color:"rgba(255,255,255,.12)", letterSpacing:2, textTransform:"uppercase" }}>hoặc đăng nhập bằng</span>
               <div style={{ flex:1, height:1, background:"rgba(255,255,255,.04)" }} />
             </div>
 
             {/* Alt buttons */}
-            <div style={{ display:"flex", gap:10, animation:"fu .6s .57s both" }}>
+            <div style={{ display:"flex", gap:8, animation:"fu .6s .57s both" }}>
               {[
                 { label:"Quét QR", icon:<><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h2v2M17 21h2M21 17v2M21 15v-2h-2M21 21h-2v-2"/></> },
                 { label:"Mã NV", icon:<><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></> },
                 { label:"SSO công ty", icon:<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/> },
               ].map(({ label, icon }) => (
                 <button key={label} className="gp3-btn-alt">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width:16, height:16 }}>{icon}</svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width:14, height:14 }}>{icon}</svg>
                   {label}
                 </button>
               ))}
             </div>
 
             {/* Security */}
-            <div style={{ display:"flex", alignItems:"center", gap:11, marginTop:20, paddingTop:20, borderTop:"1px solid rgba(255,255,255,.03)", animation:"fu .6s .62s both" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:"clamp(10px,1.8vh,18px)", paddingTop:"clamp(10px,1.8vh,18px)", borderTop:"1px solid rgba(255,255,255,.03)", animation:"fu .6s .62s both" }}>
               <div className="gp3-sec-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" style={{ width:15, height:15 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" style={{ width:14, height:14 }}>
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
                 </svg>
               </div>
-              <p style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"rgba(255,255,255,.16)", lineHeight:1.6, fontWeight:300 }}>
+              <p style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10.5, color:"rgba(255,255,255,.16)", lineHeight:1.55, fontWeight:300, margin:0 }}>
                 <b style={{ color:"rgba(255,255,255,.28)", fontWeight:400 }}>SSL 256-bit · Mã hoá đầu cuối · Zero-log.</b><br />
                 Chỉ dành cho nhân viên GấuPhim. Mọi hành động được kiểm soát.
               </p>
             </div>
           </div>
-          {/* ── end right ── */}
 
         </div>
       </div>
