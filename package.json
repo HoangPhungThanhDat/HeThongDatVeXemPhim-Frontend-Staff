@@ -16,7 +16,9 @@
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.2",
     "apexcharts": "3.50.0",
+    "axios": "^1.6.8",
     "framer-motion": "^11.3.7",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.562.0",
     "npm-force-resolutions": "^0.0.10",
     "react": "18.2.0",
@@ -32,10 +34,11 @@
     "recharts": "^3.6.0",
     "stylis": "^4.3.2",
     "stylis-plugin-rtl": "^2.0.2",
+    "sweetalert2": "^11.26.25",
     "web-vitals": "^4.2.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set PORT=3003 && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

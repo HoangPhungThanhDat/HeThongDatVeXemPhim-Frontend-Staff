@@ -15,9 +15,10 @@ export default function Dashboard(props) {
   // states and functions
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
+  
   // functions for changing the states from components
   const getRoute = () => {
-    return window.location.pathname !== '/admin/full-screen-maps';
+    return window.location.pathname !== '/staff/full-screen-maps';
   };
 
   const getActiveRoute = (routes) => {
@@ -116,7 +117,8 @@ export default function Dashboard(props) {
       if (route.children) {
         return getRoutes(route.children);
       }
-      if (route.layout === '/admin') {
+      // ✅ ĐÃ SỬA: Đổi từ '/admin' thành '/staff'
+      if (route.layout === '/staff') {
         return (
           <Route path={`${route.path}`} element={route.component} key={key} />
         );
@@ -130,6 +132,7 @@ export default function Dashboard(props) {
 
   document.documentElement.dir = 'ltr';
   const { onOpen } = useDisclosure();
+  
   return (
     <Box>
       <Box>
@@ -158,7 +161,7 @@ export default function Dashboard(props) {
               <Box>
                 <Navbar
                   onOpen={onOpen}
-                  logoText={'Horizon UI Dashboard PRO'}
+                  logoText={'Gấu Phim Staff'}
                   brandText={getActiveRoute(routes)}
                   secondary={getActiveNavbar(routes)}
                   message={getActiveNavbarText(routes)}
@@ -178,9 +181,10 @@ export default function Dashboard(props) {
               >
                 <Routes>
                   {getRoutes(routes)}
+                  {/* ✅ ĐÃ SỬA: Đổi đường dẫn chuyển hướng mặc định */}
                   <Route
                     path="/"
-                    element={<Navigate to="/admin/default" replace />}
+                    element={<Navigate to="/staff/default" replace />}
                   />
                 </Routes>
               </Box>

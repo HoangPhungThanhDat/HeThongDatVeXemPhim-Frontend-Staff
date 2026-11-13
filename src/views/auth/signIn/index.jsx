@@ -1,360 +1,38 @@
-import React, { useState, useEffect, useRef } from "react";
-
-const GLOBAL_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@300;400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
-
-:root{--o:#FF5500;--o2:#FF8C00;--o3:#FF3300;}
-
-@keyframes cardReveal{from{opacity:0;transform:translateY(40px) scale(.97)}to{opacity:1;transform:none}}
-@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes scanMove{from{top:-2px}to{top:100%}}
-@keyframes corePulse{0%,100%{transform:scale(1)}50%{transform:scale(.8)}}
-@keyframes ringExp{0%{transform:scale(.5);opacity:1}100%{transform:scale(1);opacity:0}}
-@keyframes shine{0%{left:-80%}35%,100%{left:130%}}
-@keyframes secPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,85,0,0)}50%{box-shadow:0 0 0 6px rgba(255,85,0,.04)}}
-@keyframes fdotMove{0%{transform:translateY(0);opacity:0}10%{opacity:.3}90%{opacity:.15}100%{transform:translateY(-120px);opacity:0}}
-@keyframes textGlow{0%,100%{opacity:0}50%{opacity:.4}}
-
-.gp3-noise{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-  background-size:256px;}
-.gp3-vignette{position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.7) 100%);}
-.gp3-hlines{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.018;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,85,0,1) 3px,rgba(255,85,0,1) 4px);}
-.gp3-scan{position:fixed;left:0;right:0;height:2px;z-index:3;pointer-events:none;
-  background:linear-gradient(transparent,rgba(255,85,0,.5),transparent);
-  animation:scanMove 3.5s linear infinite;}
-
-/* ── CARD ── */
-.gp3-card{
-  width:100%;
-  height:calc(100vh - clamp(16px,3vh,32px) * 2);
-  max-height:820px;
-  min-height:480px;
-  display:grid;
-  grid-template-columns:1.2fr 1fr;
-  border-radius:20px;overflow:hidden;position:relative;
-  animation:cardReveal 1s cubic-bezier(.16,1,.3,1) both;
-}
-.gp3-card::before{
-  content:'';position:absolute;inset:0;border-radius:20px;padding:1px;
-  background:linear-gradient(135deg,rgba(255,85,0,.4),rgba(255,85,0,.05),rgba(255,85,0,.2));
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;
-  pointer-events:none;z-index:20;}
-
-/* ── LEFT ── */
-.gp3-left{
-  background:linear-gradient(145deg,#0A0A0A,#0D0D0D,#0F0808);
-  padding:clamp(16px,3vh,42px) clamp(20px,3vw,48px);
-  display:flex;flex-direction:column;
-  position:relative;overflow:hidden;
-  border-right:1px solid rgba(255,85,0,.08);}
-.gp3-left::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,85,0,.5),transparent);}
-.gp3-watermark{
-  position:absolute;right:-40px;bottom:-60px;
-  font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,18vw,240px);color:transparent;
-  -webkit-text-stroke:1px rgba(255,85,0,.05);line-height:1;
-  pointer-events:none;user-select:none;letter-spacing:-10px;}
-.gp3-ring{position:absolute;border-radius:50%;pointer-events:none;border:1px solid rgba(255,85,0,.06);}
-.gp3-ring1{width:420px;height:420px;right:-120px;top:-120px;animation:spin 60s linear infinite;}
-.gp3-ring2{width:280px;height:280px;right:-60px;top:-60px;animation:spin 40s linear infinite reverse;border-style:dashed;border-color:rgba(255,85,0,.04);}
-.gp3-ring3{width:160px;height:160px;right:20px;top:20px;animation:spin 25s linear infinite;border-color:rgba(255,85,0,.08);}
-.gp3-ring4{width:320px;height:320px;left:-100px;bottom:-100px;animation:spin 50s linear infinite reverse;border-color:rgba(255,85,0,.04);}
-.gp3-perfs{position:absolute;left:0;top:0;bottom:0;width:22px;
-  display:flex;flex-direction:column;justify-content:space-around;
-  padding:12px 4px;opacity:.08;pointer-events:none;}
-.gp3-perf{width:14px;height:10px;border-radius:2px;background:var(--o);flex-shrink:0;}
-
-/* Logo gem */
-.gp3-logo-gem{
-  width:42px;height:42px;border-radius:12px;
-  background:linear-gradient(135deg,rgba(255,85,0,.25),rgba(255,50,0,.08));
-  border:1px solid rgba(255,85,0,.3);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;flex-shrink:0;}
-.gp3-logo-gem::before{
-  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-  background:conic-gradient(transparent,rgba(255,85,0,.15),transparent 30%);
-  animation:spin 4s linear infinite;}
-.gp3-logo-gem svg{position:relative;z-index:1;}
-
-.gp3-h1-outline{
-  display:block;color:transparent;
-  -webkit-text-stroke:1.5px var(--o);
-  letter-spacing:4px;font-size:clamp(38px,6vw,72px);
-  position:relative;}
-.gp3-h1-outline::after{
-  content:attr(data-text);position:absolute;left:0;top:0;
-  color:transparent;-webkit-text-stroke:0;
-  background:linear-gradient(90deg,var(--o),var(--o2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  opacity:0;animation:textGlow 3s ease-in-out infinite;}
-
-/* Hero block — flex:1 nhưng min-height:0 để tự co */
-.gp3-hero-block{
-  flex:1;min-height:0;
-  display:flex;flex-direction:column;justify-content:center;
-  margin:clamp(10px,2vh,30px) 0;
-  position:relative;z-index:2;
-  animation:fu .7s .2s both;}
-
-/* Description text ẩn khi quá chật */
-.gp3-desc-text{
-  font-size:clamp(11px,1.5vh,13.5px);
-  color:rgba(255,255,255,.28);
-  line-height:1.7;max-width:300px;
-  margin-top:clamp(6px,1.2vh,16px);
-  font-weight:300;}
-
-.gp3-stats{
-  display:flex;background:rgba(255,255,255,.015);
-  border:1px solid rgba(255,255,255,.05);border-radius:12px;overflow:hidden;
-  flex-shrink:0;}
-.gp3-stat{flex:1;padding:clamp(6px,1.2vh,14px) 16px;border-right:1px solid rgba(255,255,255,.04);position:relative;}
-.gp3-stat:last-child{border-right:none;}
-.gp3-stat::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
-  background:linear-gradient(to right,transparent,var(--o),transparent);opacity:0;transition:opacity .3s;}
-.gp3-stat:hover::after{opacity:.4;}
-
-/* Pills — luôn hiển thị, flex-shrink:0, flex-wrap:wrap */
-.gp3-pills-row{
-  display:flex;flex-wrap:wrap;gap:5px;
-  margin-top:clamp(6px,1.2vh,16px);
-  position:relative;z-index:2;
-  flex-shrink:0;
-  animation:fu .7s .42s both;}
-
-.gp3-pill{transition:all .3s;cursor:default;position:relative;overflow:hidden;}
-.gp3-pill::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,85,0,.08),transparent);opacity:0;transition:opacity .3s;}
-.gp3-pill:hover{border-color:rgba(255,85,0,.25)!important;color:rgba(255,255,255,.7)!important;}
-.gp3-pill:hover::before{opacity:1;}
-
-/* Footer flag — flex-shrink:0 */
-.gp3-footer-flag{
-  padding-top:clamp(8px,1.4vh,16px);
-  border-top:1px solid rgba(255,255,255,.04);
-  margin-top:clamp(8px,1.4vh,16px);
-  position:relative;z-index:2;
-  flex-shrink:0;
-  animation:fu .7s .5s both;}
-
-/* ── RIGHT ── */
-.gp3-right{
-  background:#070707;
-  padding:clamp(18px,3.5vh,48px) clamp(18px,3vw,44px);
-  display:flex;flex-direction:column;justify-content:center;
-  position:relative;overflow:hidden;}
-.gp3-corner-tl{position:absolute;top:0;right:0;width:60px;height:60px;
-  border-top:1px solid rgba(255,85,0,.3);border-right:1px solid rgba(255,85,0,.3);
-  border-radius:0 0 0 24px;pointer-events:none;}
-.gp3-corner-br{position:absolute;bottom:0;left:0;width:60px;height:60px;
-  border-bottom:1px solid rgba(255,85,0,.15);border-left:1px solid rgba(255,85,0,.15);
-  border-radius:0 24px 0 0;pointer-events:none;}
-.gp3-fdot{position:absolute;border-radius:50%;background:var(--o);
-  animation:fdotMove linear infinite;opacity:0;}
-
-.gp3-live-core{position:absolute;inset:0;border-radius:50%;background:var(--o);animation:corePulse 2s ease-in-out infinite;}
-.gp3-live-ring{position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(255,85,0,.5);animation:ringExp 2s ease-out infinite;}
-.gp3-live-ring2{position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,85,0,.2);animation:ringExp 2s ease-out infinite .4s;}
-
-/* inputs */
-.gp3-inp,.gp3-sel{
-  width:100%;height:clamp(40px,5.5vh,50px);
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;color:#fff;
-  font-size:13px;font-family:'Syne',sans-serif;
-  padding:0 44px 0 16px;outline:none;
-  transition:all .25s;-webkit-appearance:none;appearance:none;}
-.gp3-inp::placeholder{color:rgba(255,255,255,.13);font-size:12.5px;}
-.gp3-inp:focus,.gp3-sel:focus{
-  border-color:rgba(255,85,0,.35);background:rgba(255,85,0,.025);
-  box-shadow:0 0 0 4px rgba(255,85,0,.06),inset 0 1px 0 rgba(255,255,255,.04);}
-.gp3-sel option{background:#0D0D0D;color:#fff;}
-.gp3-inp-line{
-  height:1px;margin-top:-1px;border-radius:0 0 12px 12px;
-  background:linear-gradient(to right,transparent,var(--o),transparent);
-  transform:scaleX(0);transform-origin:center;transition:transform .3s;opacity:.6;}
-
-.gp3-chk-box{
-  width:16px;height:16px;border-radius:5px;
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.02);
-  display:flex;align-items:center;justify-content:center;
-  transition:all .2s;flex-shrink:0;position:relative;overflow:hidden;}
-.gp3-chk-box.checked::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,var(--o),var(--o3));border-radius:4px;}
-.gp3-chk-box.checked::after{
-  content:'';width:9px;height:5.5px;
-  border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;
-  transform:rotate(-45deg) translateY(-1px);display:block;position:relative;z-index:1;}
-
-.gp3-btn-main{
-  width:100%;height:clamp(44px,6vh,54px);
-  background:linear-gradient(135deg,#FF5500,#FF3300,#FF7700);
-  background-size:200% 100%;color:#fff;
-  font-size:13px;font-weight:700;font-family:'Syne',sans-serif;
-  letter-spacing:1.5px;text-transform:uppercase;
-  border:none;border-radius:13px;cursor:pointer;
-  position:relative;overflow:hidden;
-  transition:transform .15s,box-shadow .2s,background-position .4s;}
-.gp3-btn-main::before{content:'';position:absolute;inset:0;border-radius:13px;
-  background:linear-gradient(to bottom,rgba(255,255,255,.12),transparent 60%);}
-.gp3-btn-main:hover{transform:translateY(-2px);background-position:100% 0;
-  box-shadow:0 16px 50px rgba(255,60,0,.45),0 0 30px rgba(255,85,0,.2);}
-.gp3-btn-main:active{transform:translateY(0);}
-.gp3-shine{position:absolute;top:0;left:-80%;width:60%;height:100%;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,.2),transparent);
-  transform:skewX(-20deg);animation:shine 3s infinite 1.5s;}
-
-.gp3-btn-alt{
-  flex:1;height:clamp(38px,5vh,46px);background:transparent;
-  border:1px solid rgba(255,255,255,.06);border-radius:11px;
-  color:rgba(255,255,255,.3);font-size:11.5px;font-family:'Syne',sans-serif;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
-  transition:all .25s;letter-spacing:.3px;position:relative;overflow:hidden;}
-.gp3-btn-alt::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,85,0,.06),transparent);opacity:0;transition:opacity .3s;}
-.gp3-btn-alt:hover{border-color:rgba(255,85,0,.2);color:rgba(255,255,255,.6);}
-.gp3-btn-alt:hover::before{opacity:1;}
-
-.gp3-sec-icon{
-  width:32px;height:32px;background:rgba(255,85,0,.05);
-  border:1px solid rgba(255,85,0,.1);border-radius:9px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  animation:secPulse 3s ease-in-out infinite;}
-
-.gp3-eye-btn{
-  position:absolute;right:13px;top:50%;transform:translateY(-50%);
-  background:none;border:none;cursor:pointer;
-  color:rgba(255,85,0,.4);padding:4px;display:flex;transition:color .2s;}
-.gp3-eye-btn:hover{color:var(--o);}
-
-.gp3-fgt{background:none;border:none;font-family:'Syne',sans-serif;
-  font-size:12px;font-weight:600;color:rgba(255,85,0,.65);
-  cursor:pointer;padding:0;letter-spacing:.3px;transition:all .2s;}
-.gp3-fgt:hover{color:var(--o);text-shadow:0 0 12px rgba(255,85,0,.4);}
-
-/* ── Responsive ── */
-@media(max-width:740px){
-  .gp3-left{display:none!important;}
-  .gp3-card{grid-template-columns:1fr!important;}
-  .gp3-right{padding:28px 20px!important;}
-}
-
-/* Màn thấp: ẩn bớt decoration, KHÔNG ẩn pills */
-@media(max-height:580px){
-  .gp3-watermark{display:none;}
-  .gp3-perfs{display:none;}
-  .gp3-footer-flag{display:none!important;}
-  .gp3-desc-text{display:none!important;}
-}
-@media(max-height:680px){
-  .gp3-desc-text{display:none!important;}
-}
-`;
-
-function ParticleBg() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const cv = ref.current, cx = cv.getContext("2d");
-    let W, H, id;
-    const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
-    resize(); addEventListener("resize", resize);
-    class P {
-      reset() {
-        this.x = Math.random() * W; this.y = Math.random() * H;
-        this.r = Math.random() * 1.4 + .2;
-        this.vx = (Math.random() - .5) * .25; this.vy = -Math.random() * .5 - .08;
-        this.a = Math.random() * .35 + .04;
-        this.life = Math.random() * 220 + 80; this.age = 0;
-        this.hue = 10 + Math.random() * 25; this.sat = 70 + Math.random() * 30;
-      }
-      constructor() { this.reset(); this.age = Math.random() * this.life; }
-    }
-    const pts = Array.from({ length: 140 }, () => new P());
-    const draw = () => {
-      cx.fillStyle = "#050505"; cx.fillRect(0, 0, W, H);
-      [[W*.12,H*.18,W*.42,"rgba(255,60,0,.06)"],[W*.88,H*.82,W*.3,"rgba(255,100,0,.04)"],[W*.5,H*.5,W*.25,"rgba(255,40,0,.02)"]].forEach(([x,y,r,c]) => {
-        const g = cx.createRadialGradient(x,y,0,x,y,r);
-        g.addColorStop(0,c); g.addColorStop(1,"transparent");
-        cx.fillStyle = g; cx.fillRect(0,0,W,H);
-      });
-      pts.forEach(p => {
-        p.age++;
-        if (p.age > p.life) p.reset();
-        const f = p.age < 20 ? p.age/20 : p.age > p.life-20 ? (p.life-p.age)/20 : 1;
-        cx.beginPath();
-        cx.arc(p.x + p.vx*p.age, p.y + p.vy*p.age, p.r, 0, Math.PI*2);
-        cx.fillStyle = `hsla(${p.hue},${p.sat}%,62%,${p.a*f})`;
-        cx.fill();
-      });
-      id = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(id); removeEventListener("resize", resize); };
-  }, []);
-  return <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:0 }} />;
-}
-
-function FilmStripBg() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const cv = ref.current, cx = cv.getContext("2d");
-    let W, H, offset = 0, id;
-    const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
-    resize(); addEventListener("resize", resize);
-    const drawStrip = (x) => {
-      const sw=34, sh=26, gap=8, ph=8, pw=8, pr=2, fullH=sh+gap;
-      cx.fillStyle = "rgba(255,85,0,0.03)";
-      cx.fillRect(x, 0, sw, H);
-      for (let i = 0; i * fullH - offset < H + fullH; i++) {
-        const y = i * fullH - (offset % fullH);
-        cx.fillStyle = "rgba(255,85,0,0.06)";
-        cx.beginPath(); cx.roundRect(x+3, y, pw, ph, pr); cx.fill();
-        cx.beginPath(); cx.roundRect(x+sw-pw-3, y, pw, ph, pr); cx.fill();
-      }
-    };
-    const frame = () => {
-      cx.clearRect(0, 0, W, H);
-      offset = (offset + .4) % (34 + 8);
-      drawStrip(0); drawStrip(W - 34);
-      id = requestAnimationFrame(frame);
-    };
-    frame();
-    return () => { cancelAnimationFrame(id); removeEventListener("resize", resize); };
-  }, []);
-  return <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:1 }} />;
-}
+// src/views/auth/signIn/index.jsx
+import React, { useState, useEffect } from "react";
+import {
+  Film, Eye, EyeOff, ArrowRight, Clock, Shield,
+  Mail, Lock, AlertCircle, XCircle, ScanLine, IdCard, Building2
+} from "lucide-react";
+import AuthApi from "api/auth/AuthApi";
+import { jwtDecode } from "jwt-decode";
+import { saveAuthData, clearAuthStorage } from "utils/auth";
+import "../../../assets/css/Login.css";
 
 function LiveClock() {
-  const [t, setT] = useState("— 00:00:00 · HCMC");
+  const [time, setTime] = useState("--:--:--");
   useEffect(() => {
     const tick = () => {
-      const n = new Date(), p = v => String(v).padStart(2,"0");
-      setT(`— ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} · HCMC`);
+      const n = new Date();
+      const p = v => String(v).padStart(2, "0");
+      setTime(`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`);
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
   return (
-    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"rgba(255,85,0,.45)", letterSpacing:2.5, marginTop:8, display:"block" }}>
-      {t}
-    </span>
+    <div className="ga-clock">
+      <Clock size={14} />
+      <span className="ga-clock-text">{time} · HCMC</span>
+    </div>
   );
 }
 
 function CountUp({ target, suffix = "" }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    const step = Math.ceil(target / 40);
+    const step = Math.max(1, Math.ceil(target / 40));
     let n = 0;
     const id = setInterval(() => {
       n = Math.min(n + step, target);
@@ -366,258 +44,345 @@ function CountUp({ target, suffix = "" }) {
   return <>{val}{suffix}</>;
 }
 
-function Field({ label, iconPath, delay, children, mb }) {
+function Field({ label, delay, icon, error, errorMsg, children }) {
   return (
-    <div style={{ marginBottom: mb ?? "clamp(8px,1.4vh,14px)", animation:`fu .6s ${delay}s both` }}>
-      <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:6 }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width:11, height:11, flexShrink:0 }}>
-          {iconPath}
-        </svg>
-        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, color:"rgba(255,255,255,.3)", letterSpacing:1.2, textTransform:"uppercase" }}>
-          {label}
-        </span>
-      </div>
-      <div style={{ position:"relative" }}>
+    <div className="ga-field" style={{ animationDelay: `${delay}s` }}>
+      <div className="ga-field-label">{icon}<span>{label}</span></div>
+      <div className="ga-input-wrap">
         {children}
-        <div className="gp3-inp-line" />
+        <div className="ga-input-shimmer" />
       </div>
+      {error && (
+        <div className="ga-error-msg">
+          <AlertCircle size={12} />
+          {errorMsg || 'Vui lòng nhập thông tin'}
+        </div>
+      )}
     </div>
   );
 }
 
-export default function StaffSignIn() {
+const GoogleIcon = () => (
+  <svg viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    <path fill="none" d="M0 0h48v48H0z"/>
+  </svg>
+);
+
+const StaffSignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [pwdError, setPwdError] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  const DASHBOARD_URL = "/staff/default";
+
+  // ⭐ XỬ LÝ GOOGLE CALLBACK
   useEffect(() => {
-    if (document.getElementById("gp3-css")) return;
-    const s = document.createElement("style");
-    s.id = "gp3-css"; s.textContent = GLOBAL_CSS;
-    document.head.appendChild(s);
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
+
+    if (error) {
+      setGoogleError(decodeURIComponent(error));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (token) {
+      setIsProcessing(true);
+      const processGoogleLogin = async () => {
+        try {
+          const response = await AuthApi.verifyGoogleToken(token);
+          const payload = response.data?.data ?? response.data;
+          const user = payload?.user ?? payload?.User;
+          if (!user) throw new Error("Không nhận được thông tin user");
+
+          // Lấy role an toàn (nhiều dạng response)
+          const roleName = user.RoleName || user.role?.RoleName || user.role;
+          if (roleName !== "Staff") {
+            setGoogleError("Tài khoản không có quyền truy cập hệ thống nhân viên!");
+            setIsProcessing(false);
+            clearAuthStorage();
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+
+          if (user.Status !== "Active" && user.Status !== "active") {
+            setGoogleError("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên!");
+            setIsProcessing(false);
+            clearAuthStorage();
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+
+          saveAuthData(token, user);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          window.location.href = DASHBOARD_URL;
+        } catch (err) {
+          console.error("❌ Google login error:", err);
+          setGoogleError("Xác thực Google thất bại. Vui lòng thử lại!");
+          setIsProcessing(false);
+          clearAuthStorage();
+        }
+      };
+      processGoogleLogin();
+    }
   }, []);
 
   useEffect(() => {
-    const handler = (e) => {
-      const box = e.target.closest("[data-ibox]");
-      if (!box) return;
-      const line = box.querySelector(".gp3-inp-line");
-      if (!line) return;
-      line.style.transform = e.type === "focusin" ? "scaleX(1)" : "scaleX(0)";
-    };
-    document.addEventListener("focusin", handler);
-    document.addEventListener("focusout", handler);
-    return () => { document.removeEventListener("focusin", handler); document.removeEventListener("focusout", handler); };
+    const saved = localStorage.getItem("saved_email");
+    if (saved) { setEmail(saved); setRemember(true); }
   }, []);
 
-  const PILLS = ["Tra cứu phim","Chọn ghế live","In vé QR","Báo cáo ca","Hoàn vé","Combo bắp nước"];
+  const validate = () => {
+    let valid = true;
+    if (!email.trim()) { setEmailError(true); valid = false; } else setEmailError(false);
+    if (!password.trim()) { setPwdError(true); valid = false; } else setPwdError(false);
+    return valid;
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setLoading(true);
+    setGoogleError(null);
+
+    try {
+      const response = await AuthApi.Login({ Email: email, Password: password });
+      const data = response.data?.data ?? response.data;
+      const access_token = data?.access_token || data?.token;
+      const user = data?.user ?? data?.User;
+
+      if (!access_token) throw new Error("Không nhận được access token từ server");
+
+      let decoded = {};
+      try { decoded = jwtDecode(access_token) || {}; } catch (err) { console.warn(err); }
+
+      const roleName = decoded.role || decoded.RoleName || user?.RoleName || user?.role;
+
+      if (roleName && roleName !== "Staff") {
+        alert("Bạn không có quyền đăng nhập vào hệ thống nhân viên!");
+        setLoading(false);
+        return;
+      }
+
+      saveAuthData(access_token, {
+        RoleName: roleName || "Staff",
+        FullName: user?.FullName || user?.fullName,
+        UserId:   user?.UserId || user?.userId,
+        Email:    user?.Email || user?.email,
+      });
+
+      if (remember) localStorage.setItem("saved_email", email);
+      else localStorage.removeItem("saved_email");
+
+      window.location.href = DASHBOARD_URL;
+    } catch (error) {
+      console.error("❌ Login error:", error);
+      if (error.response?.status === 401) {
+        setEmailError(true);
+        setPwdError(true);
+        alert("Sai tên đăng nhập hoặc mật khẩu!");
+      } else if (error.response?.status === 403) {
+        const msg = error.response?.data?.error || error.response?.data?.message;
+        alert(msg || "Tài khoản không có quyền truy cập!");
+      } else {
+        alert("Đăng nhập thất bại. Vui lòng thử lại!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    setGoogleLoading(true);
+    setGoogleError(null);
+    AuthApi.googleLogin();
+  };
+
+  if (isProcessing || googleLoading) {
+    return (
+      <div className="ga-root">
+        <div className="ga-bg-gradient" />
+        <div className="ga-bg-grid" />
+        <div className="ga-bg-orb ga-bg-orb-1" />
+        <div className="ga-bg-orb ga-bg-orb-2" />
+        <div className="ga-loading-wrapper">
+          <div className="ga-loading-card">
+            <div className="ga-loading-logo">
+              <div className="ga-loading-logo-icon"><Film /></div>
+              <span className="ga-loading-logo-text"><span>Gấu</span>Phim</span>
+            </div>
+            <div className="ga-loading-spinner">
+              <div className="spinner-ring" /><div className="spinner-ring" />
+              <div className="spinner-ring" /><div className="spinner-ring" />
+              <div className="spinner-center"><Film /></div>
+            </div>
+            <h2 className="ga-loading-title">Đang xử lý đăng nhập...</h2>
+            <p className="ga-loading-sub">Vui lòng chờ trong giây lát</p>
+            <div className="ga-loading-bar">
+              <div className="ga-loading-bar-track"><div className="ga-loading-bar-fill" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const FEATURES = ["Tra cứu phim", "Chọn ghế live", "In vé QR", "Báo cáo ca", "Hoàn vé", "Combo bắp nước"];
 
   return (
-    <div style={{
-      height: "100vh",
-      width: "100vw",
-      background: "#050505",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "clamp(10px,2.5vh,28px) clamp(10px,2vw,28px)",
-      position: "relative",
-      overflow: "hidden",
-      fontFamily: "'Syne',sans-serif",
-      boxSizing: "border-box",
-    }}>
-      <ParticleBg />
-      <FilmStripBg />
-      <div className="gp3-noise" />
-      <div className="gp3-vignette" />
-      <div className="gp3-hlines" />
-      <div className="gp3-scan" />
+    <div className="ga-root">
+      <div className="ga-bg-gradient" />
+      <div className="ga-bg-grid" />
+      <div className="ga-bg-orb ga-bg-orb-1" />
+      <div className="ga-bg-orb ga-bg-orb-2" />
 
-      <div style={{ position:"relative", zIndex:10, width:"100%", maxWidth:"min(1100px, 160vh)" }}>
-        <div className="gp3-card">
-
-          {/* ════ LEFT ════ */}
-          <div className="gp3-left">
-            <div className="gp3-watermark">GF</div>
-            <div className="gp3-ring gp3-ring1" />
-            <div className="gp3-ring gp3-ring2" />
-            <div className="gp3-ring gp3-ring3" />
-            <div className="gp3-ring gp3-ring4" />
-            <div className="gp3-perfs">
-              {Array.from({ length: 26 }).map((_, i) => <div key={i} className="gp3-perf" />)}
+      <div className="ga-card">
+        <div className="ga-left">
+          <div className="ga-left-glow" /><div className="ga-left-glow-2" />
+          <div className="ga-logo">
+            <div className="ga-logo-icon"><Film /></div>
+            <div>
+              <div className="ga-logo-text"><span>Gấu</span>Phim</div>
+              <div className="ga-logo-sub">Staff Portal</div>
             </div>
-
-            {/* Logo */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, position:"relative", zIndex:2, animation:"fu .7s .1s both", flexShrink:0 }}>
-              <div className="gp3-logo-gem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" strokeLinecap="round" style={{ width:20, height:20 }}>
-                  <rect x="2" y="4" width="20" height="14" rx="2"/>
-                  <path d="M8 4v14M16 4v14M2 10h20M2 14h4M18 14h4"/>
-                </svg>
+          </div>
+          <div className="ga-hero">
+            <div className="ga-badge">
+              <div className="ga-badge-dot" />
+              <span className="ga-badge-text">Ca làm việc đang mở</span>
+            </div>
+            <div className="ga-title">Đặt vé<br /><span className="ga-title-highlight">Trực tiếp</span></div>
+            <p className="ga-subtitle">
+              Tra cứu suất chiếu, chọn ghế, thanh toán và in vé QR trong 30 giây.
+              Tất cả trong một màn hình duy nhất.
+            </p>
+            <LiveClock />
+            <div className="ga-stats">
+              <div className="ga-stat-item">
+                <div className="ga-stat-number"><CountUp target={12} /></div>
+                <div className="ga-stat-label">Rạp chiếu</div>
               </div>
+              <div className="ga-stat-item">
+                <div className="ga-stat-number"><CountUp target={480} suffix="+" /></div>
+                <div className="ga-stat-label">Suất/ngày</div>
+              </div>
+              <div className="ga-stat-item">
+                <div className="ga-stat-number">24/7</div>
+                <div className="ga-stat-label">Hoạt động</div>
+              </div>
+            </div>
+            <div className="ga-features">
+              {FEATURES.map(f => (
+                <div key={f} className="ga-feature"><div className="ga-feature-dot" />{f}</div>
+              ))}
+            </div>
+          </div>
+          <div className="ga-footer">
+            <div className="ga-footer-content">
+              <span className="ga-footer-flag">🇻🇳</span>
               <div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(18px,2.5vh,26px)", color:"#FF5500", letterSpacing:3 }}>GấuPhim</div>
-                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"rgba(255,255,255,.2)", letterSpacing:2 }}>Staff Portal · v3.0</div>
-              </div>
-            </div>
-
-            {/* Hero text — flex:1 min-height:0 để tự co */}
-            <div className="gp3-hero-block">
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                <div style={{ width:28, height:1.5, background:"linear-gradient(to right,#FF5500,transparent)" }} />
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:500, color:"rgba(255,85,0,.7)", letterSpacing:3, textTransform:"uppercase" }}>Hệ thống nội bộ</span>
-              </div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(36px,6.5vh,80px)", lineHeight:.88, color:"#fff", letterSpacing:3 }}>
-                ĐẶT VÉ
-                <span className="gp3-h1-outline" data-text="TRỰC TIẾP">TRỰC TIẾP</span>
-              </div>
-              <LiveClock />
-              <p className="gp3-desc-text">
-                Tra cứu suất chiếu, chọn ghế, thanh toán và in vé QR trong 30 giây. Tất cả trong một màn hình duy nhất.
-              </p>
-            </div>
-
-            {/* Stats */}
-            <div className="gp3-stats" style={{ animation:"fu .7s .35s both" }}>
-              {[["CountUp-12","Rạp chiếu"],["CountUp-480","Suất / ngày"],["24/7","Hoạt động"]].map(([n,l]) => (
-                <div key={l} className="gp3-stat">
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(18px,2.8vh,30px)", color:"#FF5500", letterSpacing:1, lineHeight:1 }}>
-                    {n === "CountUp-12" ? <CountUp target={12} /> : n === "CountUp-480" ? <CountUp target={480} suffix="+" /> : n}
-                  </div>
-                  <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:"rgba(255,255,255,.2)", letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pills — luôn hiển thị */}
-            <div className="gp3-pills-row">
-              {PILLS.map(p => (
-                <div key={p} className="gp3-pill" style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 11px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.05)", borderRadius:100, fontSize:10.5, color:"rgba(255,255,255,.35)" }}>
-                  <div style={{ width:4, height:4, borderRadius:"50%", background:"rgba(255,85,0,.6)", flexShrink:0 }} />
-                  {p}
-                </div>
-              ))}
-            </div>
-
-            {/* Footer flag */}
-            <div className="gp3-footer-flag">
-              <div style={{ display:"inline-flex", alignItems:"center", gap:9, padding:"7px 14px", background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.04)", borderRadius:100 }}>
-                <span style={{ fontSize:16 }}>🇻🇳</span>
-                <div>
-                  <div style={{ fontSize:10.5, fontWeight:600, color:"rgba(255,255,255,.4)" }}>GấuPhim — Việt Nam</div>
-                  <div style={{ fontSize:9.5, color:"rgba(255,255,255,.15)" }}>Hoàng Sa – Trường Sa là của Việt Nam</div>
+                <div className="ga-footer-text"><strong>GấuPhim</strong> — Việt Nam</div>
+                <div className="ga-footer-text" style={{ fontSize: 10, opacity: 0.4 }}>
+                  Hoàng Sa – Trường Sa là của Việt Nam
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ════ RIGHT ════ */}
-          <div className="gp3-right">
-            <div className="gp3-corner-tl" />
-            <div className="gp3-corner-br" />
-
-            <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
-              {Array.from({ length: 18 }).map((_, i) => {
-                const s = Math.random() * 3 + 1.5;
-                return (
-                  <div key={i} className="gp3-fdot" style={{ width:s, height:s, left:`${Math.random()*100}%`, bottom:-s, animationDuration:`${4+Math.random()*6}s`, animationDelay:`${Math.random()*5}s` }} />
-                );
-              })}
+        <div className="ga-right">
+          <div className="ga-right-header">
+            <div className="ga-status-badge">
+              <div className="ga-status-badge-dot" />
+              <span className="ga-status-badge-text">Nhân viên · Sẵn sàng</span>
             </div>
+            <div className="ga-right-title">Đăng nhập <span>Nhân viên</span></div>
+            <div className="ga-right-sub">Xác thực tài khoản nhân viên GấuPhim</div>
+          </div>
 
-            {/* Form header */}
-            <div style={{ marginBottom:"clamp(12px,2vh,26px)", animation:"fu .6s .2s both" }}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"5px 12px 5px 8px", background:"rgba(255,85,0,.07)", border:"1px solid rgba(255,85,0,.15)", borderRadius:100, marginBottom:"clamp(8px,1.5vh,16px)" }}>
-                <div style={{ position:"relative", width:8, height:8, flexShrink:0 }}>
-                  <div className="gp3-live-core" />
-                  <div className="gp3-live-ring" />
-                  <div className="gp3-live-ring2" />
-                </div>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:500, color:"#FF7744", letterSpacing:1.5, textTransform:"uppercase" }}>Nhân viên · Ca đang mở</span>
-              </div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(28px,5vh,44px)", letterSpacing:2, color:"#fff", lineHeight:1, marginBottom:5 }}>ĐĂNG NHẬP</div>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"rgba(255,255,255,.22)", fontWeight:300 }}>// xác thực tài khoản nhân viên GấuPhim</div>
-            </div>
-
-            {/* Email */}
-            <Field label="Email nhân viên" delay={0.28} iconPath={<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></>}>
-              <input className="gp3-inp" type="email" placeholder="ten.nhanvien@gauphim.vn" autoComplete="email" data-ibox />
+          <form className="ga-form" onSubmit={handleLogin}>
+            <Field label="Tên đăng nhập" delay={0.25} icon={<Mail size={14} />}
+              error={emailError} errorMsg="Vui lòng nhập tên đăng nhập">
+              <input className={`ga-input ${emailError ? 'error' : ''}`} type="text"
+                placeholder="staff@gauphim.com" value={email}
+                onChange={e => { setEmail(e.target.value); setEmailError(false); }}
+                autoComplete="username" />
             </Field>
 
-            {/* Password */}
-            <Field label="Mật khẩu" delay={0.34} iconPath={<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>}>
-              <input className="gp3-inp" type={showPwd ? "text" : "password"} placeholder="••••••••••" autoComplete="current-password" data-ibox />
-              <button className="gp3-eye-btn" onClick={() => setShowPwd(v => !v)} type="button">
-                {showPwd
-                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:14, height:14 }}><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:14, height:14 }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                }
+            <Field label="Mật khẩu" delay={0.32} icon={<Lock size={14} />}
+              error={pwdError} errorMsg="Vui lòng nhập mật khẩu">
+              <input className={`ga-input ${pwdError ? 'error' : ''}`}
+                type={showPwd ? "text" : "password"} placeholder="Nhập mật khẩu"
+                value={password} onChange={e => { setPassword(e.target.value); setPwdError(false); }}
+                autoComplete="current-password" />
+              <button className="ga-eye-btn" type="button" onClick={() => setShowPwd(v => !v)}>
+                {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </Field>
 
-            {/* Branch */}
-            <Field label="Rạp làm việc" delay={0.4} iconPath={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>}>
-              <select className="gp3-sel" data-ibox>
-                <option value="" disabled>Chọn rạp của bạn...</option>
-                {["GấuPhim Quận 1 — Hồ Chí Minh","GấuPhim Quận 7 — Phú Mỹ Hưng","GấuPhim Bình Thạnh — Hồ Chí Minh","GấuPhim Thủ Đức — Hồ Chí Minh","GấuPhim Hoàn Kiếm — Hà Nội","GấuPhim Cầu Giấy — Hà Nội","GấuPhim Hải Châu — Đà Nẵng","GấuPhim Sơn Trà — Đà Nẵng"].map(r => <option key={r}>{r}</option>)}
-              </select>
-              <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color:"rgba(255,255,255,.18)", pointerEvents:"none" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:13, height:13 }}><path d="M6 9l6 6 6-6"/></svg>
-              </div>
-            </Field>
-
-            {/* Options row */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"4px 0 clamp(10px,1.8vh,18px)", animation:"fu .6s .44s both" }}>
-              <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
-                <input type="checkbox" style={{ display:"none" }} checked={remember} onChange={e => setRemember(e.target.checked)} />
-                <div className={`gp3-chk-box${remember ? " checked" : ""}`} onClick={() => setRemember(v => !v)} />
-                <span style={{ fontSize:12, color:"rgba(255,255,255,.28)" }}>Ghi nhớ ca này</span>
+            <div className="ga-actions">
+              <label className="ga-remember">
+                <div className={`ga-checkbox ${remember ? 'checked' : ''}`} onClick={() => setRemember(v => !v)} />
+                <span className="ga-remember-text">Ghi nhớ ca này</span>
               </label>
-              <button className="gp3-fgt">Quên mật khẩu?</button>
+              <button className="ga-forgot" type="button">Quên mật khẩu?</button>
             </div>
 
-            {/* Main button */}
-            <button className="gp3-btn-main" style={{ animation:"fu .6s .47s both" }}>
-              <div className="gp3-shine" />
-              Bắt đầu ca làm việc
+            <button className="ga-btn-primary" type="submit" disabled={loading}>
+              <div className="ga-btn-primary-shimmer" />
+              {loading ? (<><div className="ga-spinner" />Đang xác thực...</>)
+                       : (<>Bắt đầu ca làm việc<ArrowRight size={18} /></>)}
             </button>
 
-            {/* Divider */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"clamp(10px,1.8vh,16px) 0", animation:"fu .6s .52s both" }}>
-              <div style={{ flex:1, height:1, background:"rgba(255,255,255,.04)" }} />
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, color:"rgba(255,255,255,.12)", letterSpacing:2, textTransform:"uppercase" }}>hoặc đăng nhập bằng</span>
-              <div style={{ flex:1, height:1, background:"rgba(255,255,255,.04)" }} />
-            </div>
+            <button className="ga-btn-google" type="button"
+              onClick={handleGoogleLogin} disabled={googleLoading}>
+              {googleLoading ? (<><div className="ga-spinner" />Đang kết nối Google...</>)
+                             : (<><GoogleIcon />Đăng nhập với Google</>)}
+            </button>
 
-            {/* Alt buttons */}
-            <div style={{ display:"flex", gap:8, animation:"fu .6s .57s both" }}>
-              {[
-                { label:"Quét QR", icon:<><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h2v2M17 21h2M21 17v2M21 15v-2h-2M21 21h-2v-2"/></> },
-                { label:"Mã NV", icon:<><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></> },
-                { label:"SSO công ty", icon:<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/> },
-              ].map(({ label, icon }) => (
-                <button key={label} className="gp3-btn-alt">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width:14, height:14 }}>{icon}</svg>
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Security */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:"clamp(10px,1.8vh,18px)", paddingTop:"clamp(10px,1.8vh,18px)", borderTop:"1px solid rgba(255,255,255,.03)", animation:"fu .6s .62s both" }}>
-              <div className="gp3-sec-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FF5500" strokeWidth="1.8" style={{ width:14, height:14 }}>
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
-                </svg>
+            {googleError && (
+              <div className="ga-error-msg" style={{ justifyContent: 'center', color: '#ef4444' }}>
+                <XCircle size={16} />{googleError}
               </div>
-              <p style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10.5, color:"rgba(255,255,255,.16)", lineHeight:1.55, fontWeight:300, margin:0 }}>
-                <b style={{ color:"rgba(255,255,255,.28)", fontWeight:400 }}>SSL 256-bit · Mã hoá đầu cuối · Zero-log.</b><br />
-                Chỉ dành cho nhân viên GấuPhim. Mọi hành động được kiểm soát.
+            )}
+
+            <div className="ga-divider">
+              <div className="ga-divider-line" />
+              <span className="ga-divider-text">Hoặc</span>
+              <div className="ga-divider-line" />
+            </div>
+
+            <div className="ga-alt-btns">
+              <button className="ga-btn-alt" type="button"><ScanLine size={16} />Quét QR</button>
+              <button className="ga-btn-alt" type="button"><IdCard size={16} />Mã NV</button>
+              <button className="ga-btn-alt" type="button"><Building2 size={16} />SSO</button>
+            </div>
+
+            <div className="ga-security">
+              <div className="ga-security-icon"><Shield size={18} /></div>
+              <p className="ga-security-text">
+                <strong>SSL 256-bit · Zero-log</strong> — Chỉ dành cho nhân viên GấuPhim.
+                Mọi hành động đều được <span className="highlight">ghi nhật ký</span>.
               </p>
             </div>
-          </div>
-
+          </form>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default StaffSignIn;
